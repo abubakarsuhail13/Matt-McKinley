@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 
 const WaveformBackground: React.FC = () => {
@@ -14,30 +13,40 @@ const WaveformBackground: React.FC = () => {
     let offset = 0;
 
     const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
     const draw = () => {
+      if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(47, 183, 179, 0.2)';
-      ctx.lineWidth = 2;
+      
+      const centerY = canvas.height * 0.45;
+      const step = 0.005;
+      
+      // Draw 2 layers for depth
+      [
+        { color: 'rgba(47, 183, 179, 0.1)', amp: 35, freq: 0.008, speed: 0.015 },
+        { color: 'rgba(15, 60, 90, 0.05)', amp: 20, freq: 0.012, speed: 0.008 }
+      ].forEach(layer => {
+        ctx.beginPath();
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = 1.5;
 
-      const centerY = canvas.height / 2;
-      const amplitude = 30;
-      const frequency = 0.01;
+        ctx.moveTo(0, centerY);
 
-      ctx.moveTo(0, centerY);
+        for (let x = 0; x < canvas.width; x += 2) {
+          // Combination of sine waves to create more natural medical-like pulse variation
+          const wave1 = Math.sin(x * layer.freq + offset * layer.speed);
+          const wave2 = Math.sin(x * 0.002 + offset * 0.01);
+          const y = centerY + (wave1 * layer.amp) * (0.5 + wave2 * 0.5);
+          
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
 
-      for (let x = 0; x < canvas.width; x++) {
-        // Create a heart-beat like wave or pulse
-        const y = centerY + Math.sin(x * frequency + offset) * amplitude * Math.sin(x * 0.002);
-        ctx.lineTo(x, y);
-      }
-
-      ctx.stroke();
-      offset += 0.02;
+      offset += 1;
       animationFrameId = requestAnimationFrame(draw);
     };
 
@@ -54,7 +63,7 @@ const WaveformBackground: React.FC = () => {
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 w-full h-full opacity-40 pointer-events-none"
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-60 z-0"
     />
   );
 };
